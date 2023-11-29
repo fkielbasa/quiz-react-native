@@ -3,16 +3,10 @@ import { View, Button, Text,ScrollView, TouchableOpacity, StyleSheet } from 'rea
 import ResultScreen from './ResultScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import tests from '../data/testData';
+
 
 const HomeScreen = ({ navigation }) => {
-  const tests = [
-    { id: 1, title: 'Test 1', tag: '#TAG', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi justo erat, tempor quis interdum sed...' },
-    { id: 2, title: 'Test 2', tag: '#TAG', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi justo erat, tempor quis interdum sed...' },
-    { id: 3, title: 'Test 3', tag: '#TAG', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi justo erat, tempor quis interdum sed...' },
-    { id: 4, title: 'Test 4', tag: '#TAG', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi justo erat, tempor quis interdum sed...' },
-    { id: 5, title: 'Test 5', tag: '#TAG', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi justo erat, tempor quis interdum sed...' },
-  ];
-
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.container}>
@@ -21,7 +15,7 @@ const HomeScreen = ({ navigation }) => {
             key={test.id}
             style={styles.item}
             onPress={() => {
-              navigation.navigate('Test', { testTitle: test.title });
+              navigation.navigate(`Test_${test.id}`, { testTitle: test.title });
             }}
           >
             <Text style={styles.title}>{test.title}</Text>
@@ -43,7 +37,23 @@ const HomeScreen = ({ navigation }) => {
     </View>
   );
 };
-
+// const HomeScreen = ({ navigation }) => {
+//   return (
+//     <ScrollView>
+//       {tests.map((test) => (
+//         <TouchableOpacity
+//           key={test.id}
+//           onPress={() => {
+//             navigation.navigate('Test', { testTitle: test.title });
+//           }}
+//         >
+//           <Text>{test.title}</Text>
+//           {/* Pozostała zawartość testu */}
+//         </TouchableOpacity>
+//       ))}
+//     </ScrollView>
+//   );
+// };
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -64,6 +74,7 @@ const styles = StyleSheet.create({
   },
   tag:{
     fontSize: 12,
+    color: 'blue',
     paddingBottom: 10,
   },
   content: {
