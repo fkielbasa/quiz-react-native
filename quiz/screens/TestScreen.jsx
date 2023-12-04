@@ -2,10 +2,22 @@ import * as Progress from 'react-native-progress';
 import React, { useLayoutEffect,useState,useEffect } from 'react';
 import { View, Text,StyleSheet,TouchableOpacity} from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import questions from '../data/questionData';
 
-const TestScreen = ({ navigation }) => {
-  const route = useRoute();
+const TestCompleted = ({ score }) => {
+  return (
+    <View style={styles.container}>
+    <Text style={styles.resultText}>You've completed the test!</Text>
+    <Text style={styles.resultText}>Total Questions: {questions.length}</Text>
+    <Text style={styles.resultText}>Your Score: {score}</Text>
+  </View>
+  );
+};
+
+const TestScreen = ({ navigation, route }) => {
   const { testTitle } = route.params || {};
+  const [score, setScore] = useState(0);
+  const [testCompleted, setTestCompleted] = useState(false);
 
   useLayoutEffect(() => {
     if (testTitle) {
@@ -16,30 +28,60 @@ const TestScreen = ({ navigation }) => {
   }, [navigation, testTitle]);
   
 
-  const [time, setTime] = useState(15); 
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(questions[currentQuestionIndex]);
+  const [time, setTime] = useState(currentQuestion.duration);
   const [progress, setProgress] = useState(1);
+
+  useEffect(() => {
+    console.log(score);
+  }, [score]);
+  
+
+  const handleAnswerClick = (isCorrect) => {
+    if (isCorrect) {
+      setScore((prevScore) => prevScore + 1);
+    }
+    moveToNextQuestion();
+  };
+
+
+  const moveToNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setCurrentQuestion(questions[currentQuestionIndex + 1]);
+      setTime(questions[currentQuestionIndex + 1].duration);
+      setProgress(1);
+    } else {
+      setTestCompleted(true);
+    }
+  };
+ 
 
   useEffect(() => {
     const timer = setInterval(() => {
       if (time > 0) {
         setTime((prevTime) => prevTime - 1);
-        setProgress((prevProgress) => prevProgress - 1 / 15);
+        setProgress((prevProgress) => prevProgress - 1 / currentQuestion.duration);
       } else {
         clearInterval(timer);
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [time]);
-
+  }, [time, currentQuestion]);
   return (
     <View style={styles.container}>
+      {testCompleted ? (
+        <TestCompleted score={score} />
+      ):(
+        <View style={styles.container}>
       <View style={styles.row}>
       <View style={styles.header}>
-        <Text style={styles.question}>Question 1 of 10</Text>
+        <Text style={styles.question}>Question {currentQuestionIndex + 1} of {questions.length}</Text>
       </View>
       <View style={styles.timer}>
-        <Text>Czas: {time}s</Text>
+        <Text>Time: {time}s</Text>
       </View>
       </View>
       <View style={styles.progressBar}>
@@ -54,26 +96,23 @@ const TestScreen = ({ navigation }) => {
         />
       </View>
       <View style={styles.questionContainer}>
-        <Text style={styles.questionText}>This is some example of a long question to fill the content?</Text>
+        <Text style={styles.questionText}>{currentQuestion.question}</Text>
         <View style={styles.answerContainer}>
           <View style={styles.answerRow}>
-            <TouchableOpacity style={styles.answerButton}>
-              <Text style={styles.answerButtonText}>A</Text>
+            {currentQuestion.answers.map((answer, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.answerButton}
+              onPress={() => handleAnswerClick(answer.isCorrect)}
+            >
+              <Text style={styles.answerButtonText}>{answer.content}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.answerButton}>
-              <Text style={styles.answerButtonText}>B</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.answerRow}>
-            <TouchableOpacity style={styles.answerButton}>
-              <Text style={styles.answerButtonText}>C</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.answerButton}>
-              <Text style={styles.answerButtonText}>D</Text>
-            </TouchableOpacity>
+          ))}
           </View>
         </View>
     </View>
+   </View>
+      )}
     </View>
   );
 };
@@ -101,7 +140,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     alignItems: 'center',
-    paddingBottom: 50,
+    paddingBottom: 20,
   },
   questionContainer: {
     flex: 1,
@@ -112,23 +151,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 10,
     fontWeight: 'bold',
+    paddingBottom: 30,
   },
   answerContainer: {
-    flex: 1,
     flexDirection: 'column',
-    marginTop: 10,
-  },
-  answerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    width: "100%",
   },
   answerButton: {
     backgroundColor: 'lightblue',
     padding: 10,
-    width: '45%',
+    width: '100%', 
+    marginBottom: 10, 
     borderRadius: 5,
-    alignItems: 'center',
   },
   answerButtonText: {
     textAlign: 'center',

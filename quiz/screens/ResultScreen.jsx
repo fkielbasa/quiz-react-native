@@ -1,10 +1,13 @@
 import React from 'react';
 import { View, Text,StyleSheet } from 'react-native';
 import results from '../data/resultData';
+import { useRoute } from '@react-navigation/native';
+
 
 const ResultScreen = () => {
   return (
     <View style={styles.container}>
+      
       <View style={styles.table}>
         <View style={styles.tableHeader}>
           <Text style={styles.headerText}>Nick</Text>

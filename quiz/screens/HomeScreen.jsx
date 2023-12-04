@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Button, Text,ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import ResultScreen from './ResultScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import tests from '../data/testData';
@@ -37,23 +36,7 @@ const HomeScreen = ({ navigation }) => {
     </View>
   );
 };
-// const HomeScreen = ({ navigation }) => {
-//   return (
-//     <ScrollView>
-//       {tests.map((test) => (
-//         <TouchableOpacity
-//           key={test.id}
-//           onPress={() => {
-//             navigation.navigate('Test', { testTitle: test.title });
-//           }}
-//         >
-//           <Text>{test.title}</Text>
-//           {/* Pozostała zawartość testu */}
-//         </TouchableOpacity>
-//       ))}
-//     </ScrollView>
-//   );
-// };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
