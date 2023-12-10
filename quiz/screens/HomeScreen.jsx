@@ -1,11 +1,21 @@
-import React from 'react';
+import React, {useState,useEffect} from 'react';
 import { View, Button, Text,ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import tests from '../data/testData';
+import fetchTests from '../api/fetchTests';
 
 
 const HomeScreen = ({ navigation }) => {
+  const [tests, setTests] = useState([]);
+
+
+  const fetchTestsData = async () => {
+    const testsData = await fetchTests();
+    setTests(testsData);
+  };
+  useEffect(() => {
+    fetchTestsData();
+    console.log(tests.id)
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.container}>
@@ -14,12 +24,17 @@ const HomeScreen = ({ navigation }) => {
             key={test.id}
             style={styles.item}
             onPress={() => {
-              navigation.navigate(`Test_${test.id}`, { testTitle: test.title });
+              navigation.navigate(`Test_${test.id}`, {
+                testID: test.id,
+                testTag: test.tags[0]
+              });
             }}
           >
-            <Text style={styles.title}>{test.title}</Text>
-            <Text style={styles.tag}>{test.tag}</Text>
-            <Text style={styles.content}>{test.content}</Text>
+            <Text style={styles.title}>{test.name}</Text>
+            <Text style={styles.tag}>
+              {test.tags.map((tag) => `#${tag}`).join(' ')}
+            </Text>
+            <Text style={styles.content}>{test.description}</Text>
           </TouchableOpacity>
         ))}
         <View style={styles.bottomContainer}>
@@ -77,9 +92,10 @@ const styles = StyleSheet.create({
     borderColor: '#000', 
   },
   buttonText: {
+    fontFamily: 'NovaSquare-Regular',
     color: 'black',
     fontSize: 16,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
   },
 });
 export default HomeScreen;

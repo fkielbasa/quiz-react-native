@@ -27,8 +27,10 @@ const styles = StyleSheet.create({
       borderBottomColor: '#ccc',
     },
     appTitle: {
+      fontFamily: 'Pacifico-Regular',
       fontSize: 24,
-      fontWeight: 'bold',
+      color: 'blue',
+      // fontWeight: 'bold',
       marginBottom: 10,
     },
     appLogo: {

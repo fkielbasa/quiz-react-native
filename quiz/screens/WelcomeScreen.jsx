@@ -1,44 +1,43 @@
-import { View, Text,StyleSheet,Button } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState, useEffect } from 'react';
-const WelcomeScreen = ({navigation}) => {
-    const [showWelcome, setShowWelcome] = useState(false);
+import React from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
 
-    const handleAccept = async () => {
-      try {
-        await AsyncStorage.setItem('@app_welcome_status', 'accepted');
-        // navigation.navigate("Home");
-      } catch (error) {
-        console.error('Error setting welcome status:', error);
-      }
-    };
-  
-    useEffect(() => {
-      const checkWelcome = async () => {
-        try {
-          const hasShownWelcome = await AsyncStorage.getItem('@app_welcome_status');
-          if (hasShownWelcome === null) {
-            setShowWelcome(true);
-          }
-        } catch (error) {
-          console.error('Error fetching welcome status:', error);
-        }
-      };
-      checkWelcome();
-    }, []);
-  
-    
-  
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <View>
-          <Text>Regulamin</Text>
-          <Button title="Akceptuję" onPress={()=> navigation.navigate("Home")} />
-        </View>
+const WelcomeScreen = ({ handleAccept }) => {
+  return (
+    <View style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.regulationTitle}>Regulamin</Text>
+        <Text style={styles.regulationText}>
+          Użytkownik zobowiązany jest do przestrzegania zasad określonych w aplikacji.
+          Niedozwolone jest używanie aplikacji w sposób naruszający prawo lub szkodzący innym użytkownikom.
+        </Text>
+        <Button title="Akceptuję" onPress={handleAccept} />
       </View>
-    );
-  
+    </View>
+  );
+};
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#f5f5f5',
+    },
+    content: {
+      backgroundColor: '#fff',
+      padding: 20,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: '#ccc',
+    },
+    regulationTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    regulationText: {
+      fontSize: 16,
+      marginBottom: 20,
+    },
+});
 
-    
-}
-export default WelcomeScreen;   
+export default WelcomeScreen;

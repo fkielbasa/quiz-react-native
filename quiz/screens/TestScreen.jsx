@@ -2,61 +2,70 @@ import * as Progress from 'react-native-progress';
 import React, { useLayoutEffect,useState,useEffect } from 'react';
 import { View, Text,StyleSheet,TouchableOpacity} from 'react-native';
 import { useRoute } from '@react-navigation/native';
-import questions from '../data/questionData';
+import fetchTestDetails from '../api/fetchTestDetails';
 
-const TestCompleted = ({ score }) => {
+const TestCompleted = ({ score, totalQuestions, testTag }) => {
+  useEffect(() => {
+    const sendData = async () => {
+      try {
+        console.log(testTag)
+        const result = await fetch('https://tgryl.pl/quiz/result', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nick: 'Player',
+            score: score,
+            total: totalQuestions,
+            type: testTag,
+          }),
+        });
+
+        if (result.ok) {
+          console.log('Wyniki quizu zostały pomyślnie wysłane!');
+        } else {
+          console.error('Wystąpił błąd podczas wysyłania wyników.');
+        }
+      } catch (error) {
+        console.error('Wystąpił błąd:', error);
+      }
+    };
+
+    sendData();
+  }, [score, totalQuestions]);
   return (
     <View style={styles.container}>
-    <Text style={styles.resultText}>You've completed the test!</Text>
-    <Text style={styles.resultText}>Total Questions: {questions.length}</Text>
-    <Text style={styles.resultText}>Your Score: {score}</Text>
-  </View>
+      <Text style={styles.resultText}>You've completed the test!</Text>
+      <Text style={styles.resultText}>Total Questions: {totalQuestions}</Text>
+      <Text style={styles.resultText}>Your Score: {score}</Text>
+    </View>
   );
 };
 
 const TestScreen = ({ navigation, route }) => {
-  const { testTitle } = route.params || {};
+  const { testTitle, testID, numberOfQuestions,testTag } = route.params || {};
   const [score, setScore] = useState(0);
   const [testCompleted, setTestCompleted] = useState(false);
-
-  useLayoutEffect(() => {
-    if (testTitle) {
-      navigation.setOptions({
-        title: testTitle
-      });
-    }
-  }, [navigation, testTitle]);
-  
-
+  const [testDetails, setTestDetails] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(questions[currentQuestionIndex]);
-  const [time, setTime] = useState(currentQuestion.duration);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [time, setTime] = useState(0);
   const [progress, setProgress] = useState(1);
+  const [totalQuestions, setTotalQuestions] = useState(0);
 
   useEffect(() => {
-    console.log(score);
-  }, [score]);
-  
+    fetchTest();
+  }, []);
 
-  const handleAnswerClick = (isCorrect) => {
-    if (isCorrect) {
-      setScore((prevScore) => prevScore + 1);
-    }
-    moveToNextQuestion();
+  const fetchTest = async () => {
+    const details = await fetchTestDetails(testID);
+    setTestDetails(details);
+    setTotalQuestions(details.tasks.length);
+    setCurrentQuestion(details.tasks[0]);
+    setTime(details.tasks[0].duration);
   };
-
-
-  const moveToNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setCurrentQuestion(questions[currentQuestionIndex + 1]);
-      setTime(questions[currentQuestionIndex + 1].duration);
-      setProgress(1);
-    } else {
-      setTestCompleted(true);
-    }
-  };
- 
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -70,48 +79,70 @@ const TestScreen = ({ navigation, route }) => {
 
     return () => clearInterval(timer);
   }, [time, currentQuestion]);
+
+  const handleAnswerClick = (isCorrect) => {
+    if (isCorrect) {
+      setScore((prevScore) => prevScore + 1);
+    }
+    moveToNextQuestion();
+    console.log(score)
+  };
+
+  const moveToNextQuestion = () => {
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
+      setCurrentQuestion(testDetails.tasks[currentQuestionIndex + 1]);
+      setTime(testDetails.tasks[currentQuestionIndex + 1].duration);
+      setProgress(1);
+    } else {
+      setTestCompleted(true);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {testCompleted ? (
-        <TestCompleted score={score} />
-      ):(
+        <TestCompleted score={score} totalQuestions={totalQuestions} testTag={testTag}/>
+      ) : (
         <View style={styles.container}>
-      <View style={styles.row}>
-      <View style={styles.header}>
-        <Text style={styles.question}>Question {currentQuestionIndex + 1} of {questions.length}</Text>
-      </View>
-      <View style={styles.timer}>
-        <Text>Time: {time}s</Text>
-      </View>
-      </View>
-      <View style={styles.progressBar}>
-        <Progress.Bar
-          styleAttr="Horizontal"
-          indeterminate={false}
-          progress={progress}
-          color="#FFD700"
-          height={12}
-          width={330}
-          backgroundColor="#505148"
-        />
-      </View>
-      <View style={styles.questionContainer}>
-        <Text style={styles.questionText}>{currentQuestion.question}</Text>
-        <View style={styles.answerContainer}>
-          <View style={styles.answerRow}>
-            {currentQuestion.answers.map((answer, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.answerButton}
-              onPress={() => handleAnswerClick(answer.isCorrect)}
-            >
-              <Text style={styles.answerButtonText}>{answer.content}</Text>
-            </TouchableOpacity>
-          ))}
+          <View style={styles.row}>
+            <View style={styles.header}>
+              <Text style={styles.question}>
+                Question {currentQuestionIndex + 1} of {totalQuestions}
+              </Text>
+            </View>
+            <View style={styles.timer}>
+              <Text>Time: {time}s</Text>
+            </View>
+          </View>
+          <View style={styles.progressBar}>
+            <Progress.Bar
+              styleAttr="Horizontal"
+              indeterminate={false}
+              progress={progress}
+              color="#FFD700"
+              height={12}
+              width={330}
+              backgroundColor="#505148"
+            />
+          </View>
+          <View style={styles.questionContainer}>
+            <Text style={styles.questionText}>{currentQuestion?.question}</Text>
+            <View style={styles.answerContainer}>
+              <View style={styles.answerRow}>
+                {currentQuestion?.answers.map((answer, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.answerButton}
+                    onPress={() => handleAnswerClick(answer.isCorrect)}
+                  >
+                    <Text style={styles.answerButtonText}>{answer.content}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </View>
         </View>
-    </View>
-   </View>
       )}
     </View>
   );
@@ -166,6 +197,15 @@ const styles = StyleSheet.create({
   },
   answerButtonText: {
     textAlign: 'center',
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  resultText: {
+    fontSize: 18,
+    marginBottom: 10,
   },
 });
 

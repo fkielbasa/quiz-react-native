@@ -6,7 +6,6 @@ import {useState,useEffect} from 'react';
 import {AppRegistry} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {name as appName} from './app.json';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import "react-native-gesture-handler";
 import HomeScreen from "./screens/HomeScreen";
@@ -15,51 +14,56 @@ import ResultScreen from "./screens/ResultScreen";
 import WelcomeScreen from "./screens/WelcomeScreen"
 import DrawerContent from './DrawerContent';
 import tests from './data/testData';
+import fetchTests from './api/fetchTests';
 
-
-const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 const App = () => {
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const [tests, setTests] = useState([]);
+
+
   useEffect(() => {
     SplashScreen.hide();
-  }, [])
-  
-  const [showWelcome, setShowWelcome] = useState(false);
-  const handleAccept = async () => {
+    checkFirstLaunch();
+    fetchTestsData();
+  }, []);
+
+  const checkFirstLaunch = async () => {
     try {
-      await AsyncStorage.setItem('@app_welcome_status', 'accepted');
-      navigation.navigate('xd');
+      const isFirstTime = await AsyncStorage.getItem('isFirstTime');
+      console.log('Wartość klucza isFirstTime:', isFirstTime);
+      if (isFirstTime === null) {
+        setIsFirstLaunch(true);
+      } else {
+        setIsFirstLaunch(false);
+      }
     } catch (error) {
-      console.error('Error setting welcome status:', error);
+      console.error('Błąd AsyncStorage:', error);
     }
   };
 
-  useEffect(() => {
-    const checkWelcome = async () => {
-      try {
-        const hasShownWelcome = await AsyncStorage.getItem('hasShownWelcome');
-        if (hasShownWelcome === null) {
-          setShowWelcome(true);
-        }
-      } catch (error) {
-        console.error('Error fetching welcome status:', error);
-      }
-    };    
-    checkWelcome();
-  }, []);
+  const handleAccept = async () => {
+    try {
+      await AsyncStorage.setItem('isFirstTime', 'false');
+      setIsFirstLaunch(false); 
+    } catch (error) {
+      console.error('Błąd AsyncStorage:', error);
+    }
+  };
+  const fetchTestsData = async () => {
+    const testsData = await fetchTests();
+    setTests(testsData);
+    console.log(tests.id)
+  };
 
-  // if(showWelcome) {
-  //   return(
-  //     <NavigationContainer>
-  //       <Stack.Navigator>
-  //         <Stack.Screen name="Welcome" component={WelcomeScreen} />
-  //       </Stack.Navigator>
-  //     </NavigationContainer>
-  //   );
-  // }
+  if (isFirstLaunch === null) {
+    return null; 
+  }
 
-  return (
+  return isFirstLaunch ? (
+    <WelcomeScreen handleAccept={handleAccept} />
+  ) : (
     <NavigationContainer>
       <Drawer.Navigator
         drawerContent={(props) => <DrawerContent {...props} />}
@@ -71,15 +75,14 @@ const App = () => {
           <Drawer.Screen
             key={test.id}
             name={`Test_${test.id}`}
-            options={{ title: test.title }}
+            options={{ title: test.name }} 
             component={TestScreen}
-            initialParams={{ testId: test.id }}
+            initialParams={{ testID: test.id,totalQuestions: test.numberOfTasks}}
           />
         ))}
       </Drawer.Navigator>
     </NavigationContainer>
   );
 };
-
 
 AppRegistry.registerComponent(appName, () => App);
