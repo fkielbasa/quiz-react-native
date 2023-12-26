@@ -1,20 +1,27 @@
 import React, {useState,useEffect} from 'react';
 import { View, Button, Text,ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import fetchTests from '../api/fetchTests';
+import _ from "lodash";
 
 
 const HomeScreen = ({ navigation }) => {
   const [tests, setTests] = useState([]);
 
 
-  const fetchTestsData = async () => {
-    const testsData = await fetchTests();
-    setTests(testsData);
-  };
   useEffect(() => {
-    fetchTestsData();
+    fetchAndShuffleTests();
     console.log(tests.id)
   }, []);
+  const fetchAndShuffleTests = async () => {
+    try {
+      const testsData = await fetchTests(); // Pobranie testów
+      const shuffledTests = _.shuffle(testsData); // Przetasowanie testów
+
+      setTests(shuffledTests); // Ustawienie przetasowanych testów w stanie
+    } catch (error) {
+      console.error('Błąd podczas pobierania i tasowania testów:', error);
+    }
+  };
 
   return (
     <View style={{ flex: 1 }}>

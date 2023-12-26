@@ -3,6 +3,7 @@ import React, { useLayoutEffect,useState,useEffect } from 'react';
 import { View, Text,StyleSheet,TouchableOpacity} from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import fetchTestDetails from '../api/fetchTestDetails';
+import _ from 'lodash';
 
 const TestCompleted = ({ score, totalQuestions, testTag }) => {
   useEffect(() => {
@@ -61,6 +62,11 @@ const TestScreen = ({ navigation, route }) => {
 
   const fetchTest = async () => {
     const details = await fetchTestDetails(testID);
+    const shuffledTasks = _.shuffle(details.tasks.map((task) => {
+      const shuffledAnswers = _.shuffle(task.answers);
+      return { ...task, answers: shuffledAnswers };
+    }));
+    details.tasks = shuffledTasks;
     setTestDetails(details);
     setTotalQuestions(details.tasks.length);
     setCurrentQuestion(details.tasks[0]);
