@@ -2,24 +2,36 @@ import React, {useState,useEffect} from 'react';
 import { View, Button, Text,ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import fetchTests from '../api/fetchTests';
 import _ from "lodash";
+import { getAllTests } from '../DataBase';
+import NetInfo from '@react-native-community/netinfo';
 
+const checkInternetConnection = async () => {
+  const netInfoState = await NetInfo.fetch();
+  return netInfoState.isConnected;
+}
 
 const HomeScreen = ({ navigation }) => {
   const [tests, setTests] = useState([]);
 
-
   useEffect(() => {
-    fetchAndShuffleTests();
+    fetchTestsData();
     console.log(tests.id)
   }, []);
-  const fetchAndShuffleTests = async () => {
+  const fetchTestsData = async () => {
     try {
-      const testsData = await fetchTests(); // Pobranie testów
-      const shuffledTests = _.shuffle(testsData); // Przetasowanie testów
-
-      setTests(shuffledTests); // Ustawienie przetasowanych testów w stanie
+      const isConnected = await checkInternetConnection();
+      let testsData;
+      if (isConnected) {
+        testsData = await fetchTests(); 
+        console.log("jest")
+      } else {
+        testsData = await getAllTests(); 
+        console.log("nie ma")
+      }
+      const shuffledTests = _.shuffle(testsData);
+      setTests(shuffledTests);
     } catch (error) {
-      console.error('Błąd podczas pobierania i tasowania testów:', error);
+      console.error('Błąd podczas pobierania testów:', error);
     }
   };
 

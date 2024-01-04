@@ -1,7 +1,6 @@
 import SplashScreen from 'react-native-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import * as React from 'react';
-import { View, Text,StyleSheet,Button } from 'react-native';
 import {useState,useEffect} from 'react';
 import {AppRegistry} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,73 +15,31 @@ import DrawerContent from './DrawerContent';
 import fetchTests from './api/fetchTests';
 import _ from 'lodash';
 import SQLite from 'react-native-sqlite-storage';
-const db = SQLite.openDatabase(
-  {
-    name: 'quiz.db',
-    location: 'default',
-  },
-  () => {
-    console.log('Connected to database');
-  },
-  (error) => {
-    console.error('Error opening database:', error);
-  }
-);
-// const connectToDatabase = () => {
-//   const db = openDatabase({ name: 'quiz.db',location:'default' });
-//   console.log("xed")
-//   return db;
-// };
-db.transaction((tx) => {
-  tx.executeSql(
-    'CREATE TABLE IF NOT EXISTS tests (id INTEGER PRIMARY KEY, data TEXT NOT NULL)',
-    [],
-    (tx, results) => {
-      console.log('Tabela "tests" została utworzona.');
-    },
-    (error) => {
-      console.error('Błąd podczas tworzenia tabeli "tests":', error);
-    }
-  );
-});
+import NetInfo from '@react-native-community/netinfo';
+import { saveTestsDaily, getAllTests } from './DataBase';
 
-const getAllTests = async () => {
-  return new Promise((resolve, reject) => {
-    db.transaction((tx) => {
-      tx.executeSql('SELECT * FROM tests', [], (tx, results) => {
-        const len = results.rows.length;
-        const tests = [];
-        for (let i = 0; i < len; i++) {
-          tests.push(results.rows.item(i));
-        }
-        resolve(tests);
-      });
-    },
-    (error) => {
-      reject(error);
-    });
-  });
-};
+const checkInternetConnection = async () => {
+  const netInfoState = await NetInfo.fetch();
+  return netInfoState.isConnected;
+}
+
 const Drawer = createDrawerNavigator();
 
 const App = () => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const [selectedTestId, setSelectedTestId] = useState([]);
   const [tests, setTests] = useState([]);
-  const [randomTestId, setRandomTestId] = useState(null);
- 
+
   useEffect(() => {
     SplashScreen.hide();
     checkFirstLaunch();
-    fetchAndShuffleTests();
-    // fetchAndSaveTests();
+    fetchTestsData();
+    setRandomTestId();
+    // saveTestsDaily();
     }, []);
-  useEffect(() => {
-    if (tests.length > 0) {
-      const randomIndex = Math.floor(Math.random() * tests.length);
-      const selectedTestId = tests[randomIndex].id;
-      setRandomTestId(selectedTestId);
-    }
-  }, [tests]);
+    useEffect(() => {
+      console.log(selectedTestId);
+    }, [selectedTestId]);
   
   const checkFirstLaunch = async () => {
     try {
@@ -106,47 +63,38 @@ const App = () => {
       console.error('Błąd AsyncStorage:', error);
     }
   };
-  // const fetchAndShuffleTests = async () => {
-  //   try {
-  //     const testsData = await fetchTests(); 
-  //     const shuffledTests = _.shuffle(testsData); 
-  //     setTests(shuffledTests);
-  //   } catch (error) {
-  //     console.error('Błąd podczas pobierania i tasowania testów:', error);
-  //   }
-  // };
-  const fetchAndShuffleTests = async () => {
-    try {
-      const testsData = await fetchTests(); 
-      const shuffledTests = _.shuffle(testsData); 
-      setTests(shuffledTests);
-      const allTests = await getAllTests(); // Pobierz wszystkie rekordy z tabeli tests
-      console.log('Wszystkie rekordy z tabeli tests:', allTests);
-    } catch (error) {
-      console.error('Błąd podczas pobierania i tasowania testów:', error);
+  const setRandomTestId = async () => {
+    const isConnected = await checkInternetConnection();
+    let tests;
+    if(isConnected){
+      tests = await fetchTests();
+    }
+    else {
+      tests = await getAllTests();
+    }
+    if (tests.length > 0) {
+      const randomIndex = Math.floor(Math.random() * tests.length);
+      const randomTest = tests[randomIndex];
+      console.log('test:', randomTest);
+      setSelectedTestId([...selectedTestId, randomTest]);
     }
   };
-  const fetchAndSaveTests = async () => {
-  try {
-    const testsData = await fetchTests();
-    const testsDataString = JSON.stringify(testsData);
-
-    db.transaction((tx) => {
-      tx.executeSql(
-        'INSERT INTO tests (data) VALUES (?)',
-        [testsDataString],
-        (tx, results) => {
-          console.log('Dane testów zostały pomyślnie dodane do tabeli tests.');
-        },
-        (error) => {
-          console.error('Błąd podczas dodawania danych testów:', error);
-        }
-      );
-    });
-  } catch (error) {
-    console.error('Błąd podczas pobierania danych testów:', error);
-  }
-};
+  
+  const fetchTestsData = async () => {
+    try {
+      const isConnected = await checkInternetConnection();
+      let testsData;
+      if (isConnected) {
+        testsData = await fetchTests();
+      } else {
+        testsData = await getAllTests(); 
+      }
+      const shuffledTests = _.shuffle(testsData);
+      setTests(shuffledTests);
+    } catch (error) {
+      console.error('Błąd podczas pobierania testów:', error);
+    }
+  };
 
   if (isFirstLaunch === null) {
     return null; 
@@ -162,13 +110,14 @@ const App = () => {
       >
         <Drawer.Screen name="Home" component={HomeScreen} />
         <Drawer.Screen name="Results" component={ResultScreen} />
-        <Drawer.Screen
-          name="Random Test"
-          component={TestScreen}
-          initialParams={{
-            testID: randomTestId
-          }}
-        />
+        {selectedTestId.map((randomId) => (
+            <Drawer.Screen
+            key={randomId.id}
+            name='Random Test'
+            component={TestScreen}
+            initialParams={{testID: randomId.id}}
+            />
+        ))}
         {tests.map((test) => (
           <Drawer.Screen
             key={test.id}
@@ -177,7 +126,6 @@ const App = () => {
             component={TestScreen}
             initialParams={{ testID: test.id,totalQuestions: test.numberOfTasks}}
           />
-          
         ))}
       </Drawer.Navigator>
     </NavigationContainer>

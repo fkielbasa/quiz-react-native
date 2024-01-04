@@ -4,6 +4,14 @@ import { View, Text,StyleSheet,TouchableOpacity} from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import fetchTestDetails from '../api/fetchTestDetails';
 import _ from 'lodash';
+import { getTestDetailsById,saveTestDetailsToDatabase,displayRecords } from '../DataBase';
+import NetInfo from '@react-native-community/netinfo';
+
+const checkInternetConnection = async () => {
+  const netInfoState = await NetInfo.fetch();
+  return netInfoState.isConnected;
+}
+
 
 const TestCompleted = ({ score, totalQuestions, testTag }) => {
   useEffect(() => {
@@ -55,22 +63,48 @@ const TestScreen = ({ navigation, route }) => {
   const [time, setTime] = useState(0);
   const [progress, setProgress] = useState(1);
   const [totalQuestions, setTotalQuestions] = useState(0);
+  
 
   useEffect(() => {
     fetchTest();
+    console.log(testID)
+    // displayRecords();
   }, []);
+  // useEffect(() => {
+  //   if (testDetails !== null) {
+  //     saveTestDetailsToDatabase(testID, testDetails);
+  //   }
+  // }, [testDetails, testID]);
 
   const fetchTest = async () => {
-    const details = await fetchTestDetails(testID);
-    const shuffledTasks = _.shuffle(details.tasks.map((task) => {
-      const shuffledAnswers = _.shuffle(task.answers);
-      return { ...task, answers: shuffledAnswers };
-    }));
-    details.tasks = shuffledTasks;
-    setTestDetails(details);
-    setTotalQuestions(details.tasks.length);
-    setCurrentQuestion(details.tasks[0]);
-    setTime(details.tasks[0].duration);
+    // const details = await fetchTestDetails(testID);
+    // const shuffledTasks = _.shuffle(details.tasks.map((task) => {
+    //   const shuffledAnswers = _.shuffle(task.answers);
+    //   return { ...task, answers: shuffledAnswers };
+    // }));
+    try {
+      const isConnected = await checkInternetConnection();
+      let details;
+      if (isConnected) {
+        details = await fetchTestDetails(testID);
+        console.log("jest")
+      } else {
+        details = await getTestDetailsById(testID); 
+        console.log("nie ma")
+      }
+      const shuffledTasks = _.shuffle(details.tasks.map((task) => {
+        const shuffledAnswers = _.shuffle(task.answers);
+        return { ...task, answers: shuffledAnswers };
+      }));
+      details.tasks = shuffledTasks;
+      setTestDetails(details);
+      setTotalQuestions(details.tasks.length);
+      setCurrentQuestion(details.tasks[0]);
+      setTime(details.tasks[0].duration);
+    } catch (error) {
+      console.error('Błąd podczas pobierania testów:', error);
+    }
+    
   };
 
   useEffect(() => {

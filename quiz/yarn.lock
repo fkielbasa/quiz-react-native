@@ -2102,6 +2102,11 @@
   resolved "https://registry.npmjs.org/@react-native-community/masked-view/-/masked-view-0.1.11.tgz"
   integrity sha512-rQfMIGSR/1r/SyN87+VD8xHHzDYeHaJq6elOSCAD+0iLagXkSI2pfA0LmSXP21uw5i3em7GkkRjfJ8wpqWXZNw==
 
+"@react-native-community/netinfo@^11.2.1":
+  version "11.2.1"
+  resolved "https://registry.npmjs.org/@react-native-community/netinfo/-/netinfo-11.2.1.tgz"
+  integrity sha512-n9kgmH7vLaU7Cdo8vGfJGGwhrlgppaOSq5zKj9I7H4k5iRM3aNtwURw83mgrc22Ip7nSye2afZV2xDiIyvHttQ==
+
 "@react-native/assets-registry@^0.72.0":
   version "0.72.0"
   resolved "https://registry.npmjs.org/@react-native/assets-registry/-/assets-registry-0.72.0.tgz"
@@ -7461,7 +7466,7 @@ react-native-svg@*, react-native-svg@^14.1.0:
     css-select "^5.1.0"
     css-tree "^1.1.3"
 
-react-native@*, "react-native@^0.0.0-0 || >=0.60 <1.0", react-native@^0.72.7, react-native@>=0.14.0, react-native@>=0.57, react-native@>=0.57.0:
+react-native@*, "react-native@^0.0.0-0 || >=0.60 <1.0", react-native@^0.72.7, react-native@>=0.14.0, react-native@>=0.57, react-native@>=0.57.0, react-native@>=0.59:
   version "0.72.7"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.72.7.tgz"
   integrity sha512-dqVFojOO9rOvyFbbM3/v9/GJR355OSuBhEY4NQlMIRc2w0Xch5MT/2uPoq3+OvJ+5h7a8LFAco3fucSffG0FbA==

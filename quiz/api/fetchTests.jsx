@@ -4,7 +4,7 @@ const fetchTests = async () => {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Błąd podczas pobierania listy testów:', error);
+   
       return [];
     }
   };
